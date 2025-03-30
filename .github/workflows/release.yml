@@ -2,7 +2,7 @@ name: Release Go Binary
 
 on:
   push:
-    tags:
+    branches:
       - 'main'    # Trigger on push to main branch
 
 permissions:
