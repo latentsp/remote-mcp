@@ -8,6 +8,11 @@ A Model Context Protocol (MCP) server implementation in Go. This server provides
 - Cross-platform support (Linux, macOS, Windows)
 - Automated builds for multiple platforms
 
+### Usage
+
+1. Download the relevant binary
+2. Run `remote-mcp --endpoint-url=<URL OF SSE MCP SERVER>`
+
 ## Getting Started
 
 ### Pre-built Binaries

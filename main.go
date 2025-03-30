@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -39,7 +40,18 @@ func main() {
 	flag.Parse()
 
 	// Setup logging to file
-	logFile, err := os.OpenFile("/Users/gmaliar/src/latentsp/remote-mcp/server.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error getting user home directory: %v\n", err)
+		os.Exit(1)
+	}
+	logDir := filepath.Join(homeDir, "remote-mcp")
+	if err := os.MkdirAll(logDir, 0755); err != nil {
+		fmt.Fprintf(os.Stderr, "Error creating log directory: %v\n", err)
+		os.Exit(1)
+	}
+
+	logFile, err := os.OpenFile(filepath.Join(logDir, "server.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error opening log file: %v\n", err)
 		os.Exit(1)
