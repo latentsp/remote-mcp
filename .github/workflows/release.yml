@@ -1,0 +1,85 @@
+name: Release Go Binary
+
+on:
+  push:
+    tags:
+      - 'main'    # Trigger on push to main branch
+
+permissions:
+  contents: write # Needed to create releases and upload assets
+
+jobs:
+  build-release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: [amd64] # Add other architectures if needed, e.g., arm64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22' # Specify your Go version
+
+      - name: Set output binary name
+        id: vars
+        run: |
+          binary_name="mcp-server" # <--- REPLACE THIS WITH YOUR DESIRED BINARY NAME
+          if [ "${{ matrix.goos }}" == "windows" ]; then
+            echo "binary_path=./${binary_name}.exe" >> $GITHUB_OUTPUT
+          else
+            echo "binary_path=./${binary_name}" >> $GITHUB_OUTPUT
+          fi
+          echo "asset_name=${binary_name}-${{ matrix.goos }}-${{ matrix.goarch }}" >> $GITHUB_OUTPUT
+          if [ "${{ matrix.goos }}" == "windows" ]; then
+            echo "asset_name=${binary_name}-${{ matrix.goos }}-${{ matrix.goarch }}.exe" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build Binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0 # Disable CGO for cross-compilation unless needed
+        run: |
+          go build -v -ldflags="-s -w" -o ${{ steps.vars.outputs.binary_path }} ./... # Assumes main package is in root, adjust if needed
+
+      - name: Upload artifact for release
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.vars.outputs.asset_name }}
+          path: ${{ steps.vars.outputs.binary_path }}
+
+  create-release:
+    name: Create GitHub Release
+    needs: build-release # Run after build jobs complete
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required to create release and upload assets
+    steps:
+      - name: Get Tag
+        id: get_tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/ # Download all artifacts to a directory
+
+      - name: List downloaded artifacts
+        run: ls -R artifacts/
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_tag.outputs.tag }}
+          name: Release ${{ steps.get_tag.outputs.tag }}
+          body: "Release of version ${{ steps.get_tag.outputs.tag }}"
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/**/* # Upload all files from the artifacts directory
