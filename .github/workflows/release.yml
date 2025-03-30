@@ -29,7 +29,7 @@ jobs:
       - name: Set output binary name
         id: vars
         run: |
-          binary_name="mcp-server" # <--- REPLACE THIS WITH YOUR DESIRED BINARY NAME
+          binary_name="remote-mcp"
           if [ "${{ matrix.goos }}" == "windows" ]; then
             echo "binary_path=./${binary_name}.exe" >> $GITHUB_OUTPUT
           else
@@ -46,7 +46,7 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 0 # Disable CGO for cross-compilation unless needed
         run: |
-          go build -v -ldflags="-s -w" -o ${{ steps.vars.outputs.binary_path }} ./... # Assumes main package is in root, adjust if needed
+          go build -v -ldflags="-s -w" -o ${{ steps.vars.outputs.binary_path }} ./...
 
       - name: Upload artifact for release
         uses: actions/upload-artifact@v4
@@ -61,9 +61,9 @@ jobs:
     permissions:
       contents: write # Required to create release and upload assets
     steps:
-      - name: Get Tag
-        id: get_tag
-        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      - name: Get Commit SHA
+        id: get_sha
+        run: echo "sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
 
       - name: Download all build artifacts
         uses: actions/download-artifact@v4
@@ -76,10 +76,10 @@ jobs:
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.get_tag.outputs.tag }}
-          name: Release ${{ steps.get_tag.outputs.tag }}
-          body: "Release of version ${{ steps.get_tag.outputs.tag }}"
+          tag_name: main-${{ steps.get_sha.outputs.sha }}
+          name: Build from main (${{ steps.get_sha.outputs.sha }})
+          body: "Build from main branch commit ${{ steps.get_sha.outputs.sha }}"
           draft: false
-          prerelease: false
+          prerelease: true
           files: |
             artifacts/**/* # Upload all files from the artifacts directory

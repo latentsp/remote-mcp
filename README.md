@@ -6,7 +6,7 @@ A Model Context Protocol (MCP) server implementation in Go. This server provides
 
 - MCP server implementation following the [Model Context Protocol](https://modelcontextprotocol.io/) specifications
 - Cross-platform support (Linux, macOS, Windows)
-- Automated releases for multiple platforms
+- Automated builds for multiple platforms
 
 ## Getting Started
 
@@ -16,6 +16,8 @@ You can download pre-built binaries from the [GitHub Releases](https://github.co
 - Linux (amd64)
 - macOS (amd64)
 - Windows (amd64)
+
+Each release is tagged with the commit SHA from the main branch (e.g., `main-abc1234`).
 
 ### Building from Source
 
@@ -36,24 +38,14 @@ To build the project from source:
 
 ## Development
 
-### Release Process
+### Automated Builds
 
-This project uses GitHub Actions for automated releases. The release process is triggered by:
-- Pushing to the `main` branch
-- Creating and pushing a version tag (e.g., `v1.0.0`)
-
-The workflow will:
+This project uses GitHub Actions for automated builds. Every push to the `main` branch will:
 1. Build binaries for all supported platforms
-2. Create a GitHub release with the version tag
+2. Create a new release tagged with the commit SHA
 3. Upload the built binaries as release assets
 
-To create a new release:
-1. Update the version in your code
-2. Create and push a new tag:
-   ```bash
-   git tag v1.0.0
-   git push origin v1.0.0
-   ```
+The releases are marked as pre-releases to indicate they are development builds from the main branch.
 
 ## License
 
