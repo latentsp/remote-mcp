@@ -34,12 +34,10 @@ type MCPError struct {
 }
 
 func main() {
-	// Define command line flags
 	initialEndpointURL := flag.String("endpoint-url", "", "The URL of the remote MCP server")
 	verbose := flag.Bool("verbose", false, "Enable verbose logging")
 	flag.Parse()
 
-	// Setup logging to file
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error getting user home directory: %v\n", err)
@@ -61,7 +59,6 @@ func main() {
 	log.SetOutput(logFile)
 	log.SetPrefix(fmt.Sprintf("[%s] [remote-mcp] ", time.Now().Format("2006-01-02 15:04:05")))
 
-	// Check if endpoint URL was provided
 	if *initialEndpointURL == "" {
 		log.Println("Error: --endpoint-url flag is required")
 		flag.Usage()
@@ -73,10 +70,8 @@ func main() {
 		log.Printf("Remote MCP server URL: %s", *initialEndpointURL)
 	}
 
-	// Create HTTP client
 	client := &http.Client{}
 
-	// Connect to SSE endpoint
 	sseURL := *initialEndpointURL + "/sse"
 	req, err := http.NewRequest("GET", sseURL, nil)
 	if err != nil {
@@ -90,15 +85,12 @@ func main() {
 	}
 	defer resp.Body.Close()
 
-	// Create channel for responses
 	responseChan := make(chan string)
 	defer close(responseChan)
 
-	// Create channel to signal when endpoint URL is received
 	endpointChan := make(chan string)
 	defer close(endpointChan)
 
-	// Start goroutine to read SSE responses
 	go func() {
 		scanner := bufio.NewScanner(resp.Body)
 		var currentEvent string
@@ -108,9 +100,8 @@ func main() {
 				continue
 			}
 
-			// Handle event line
 			if strings.HasPrefix(line, "event: ") {
-				currentEvent = line[7:] // Remove "event: " prefix
+				currentEvent = line[7:]
 				log.Printf("Received SSE event: %s", currentEvent)
 				continue
 			}
@@ -139,7 +130,6 @@ func main() {
 		}
 	}()
 
-	// Wait for endpoint URL before proceeding
 	log.Println("Waiting for endpoint URL...")
 	mcpURL := <-endpointChan
 	mcpURL = *initialEndpointURL + mcpURL
