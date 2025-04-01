@@ -97,7 +97,12 @@ jobs:
         run: |
           for dir in artifacts/remote-mcp-*; do
             if [ -d "$dir" ]; then
-              mv "$dir/remote-mcp"* "$dir/../$(basename "$dir")"
+              target_name=$(basename "$dir")
+              if [ -f "$dir/remote-mcp" ]; then
+                mv "$dir/remote-mcp" "artifacts/$target_name"
+              elif [ -f "$dir/remote-mcp.exe" ]; then
+                mv "$dir/remote-mcp.exe" "artifacts/$target_name.exe"
+              fi
               rm -r "$dir"
             fi
           done
