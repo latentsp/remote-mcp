@@ -27,6 +27,11 @@ jobs:
         with:
           go-version: '1.22'
 
+      - name: Initialize Go module
+        run: |
+          go mod tidy
+          go mod download
+
       - name: Set output binary name
         id: vars
         run: |
