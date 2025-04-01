@@ -118,4 +118,6 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            artifacts/**/* # Upload all files from the artifacts directory
+            artifacts/remote-mcp-*
+            artifacts/install.sh
+            artifacts/install.ps1
