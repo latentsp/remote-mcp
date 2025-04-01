@@ -93,10 +93,20 @@ jobs:
           cp scripts/install.sh artifacts/
           cp scripts/install.ps1 artifacts/
 
+      - name: Move binaries to root of artifacts
+        run: |
+          for dir in artifacts/remote-mcp-*; do
+            if [ -d "$dir" ]; then
+              mv "$dir/remote-mcp"* "$dir/../"
+              rm -r "$dir"
+            fi
+          done
+
       - name: List downloaded artifacts
         run: ls -R artifacts/
 
-      - name: Create Release and Upload Assets
+      - name: Create Release
+        id: create_release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.get_version.outputs.version }}
