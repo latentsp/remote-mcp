@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'main'    # Trigger on push to main branch
+  workflow_dispatch:  # Allow manual trigger
 
 permissions:
   contents: write # Needed to create releases and upload assets
@@ -15,7 +16,7 @@ jobs:
     strategy:
       matrix:
         goos: [linux, windows, darwin]
-        goarch: [amd64] # Add other architectures if needed, e.g., arm64
+        goarch: [amd64, arm64] # Added arm64 support
 
     steps:
       - name: Checkout code
@@ -24,7 +25,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22' # Specify your Go version
+          go-version: '1.22'
 
       - name: Set output binary name
         id: vars
@@ -44,7 +45,7 @@ jobs:
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: 0 # Disable CGO for cross-compilation unless needed
+          CGO_ENABLED: 0
         run: |
           go build -v -ldflags="-s -w" -o ${{ steps.vars.outputs.binary_path }} ./...
 
@@ -56,19 +57,30 @@ jobs:
 
   create-release:
     name: Create GitHub Release
-    needs: build-release # Run after build jobs complete
+    needs: build-release
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Required to create release and upload assets
+      contents: write
     steps:
-      - name: Get Commit SHA
-        id: get_sha
-        run: echo "sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+      - name: Get version from tag
+        id: get_version
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            VERSION="v0.0.0-dev-${GITHUB_SHA::7}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
       - name: Download all build artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts/ # Download all artifacts to a directory
+          path: artifacts/
+
+      - name: Copy installation scripts
+        run: |
+          cp scripts/install.sh artifacts/
+          cp scripts/install.ps1 artifacts/
 
       - name: List downloaded artifacts
         run: ls -R artifacts/
@@ -76,10 +88,23 @@ jobs:
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: main-${{ steps.get_sha.outputs.sha }}
-          name: Build from main (${{ steps.get_sha.outputs.sha }})
-          body: "Build from main branch commit ${{ steps.get_sha.outputs.sha }}"
+          tag_name: ${{ steps.get_version.outputs.version }}
+          name: Release ${{ steps.get_version.outputs.version }}
+          body: |
+            Release ${{ steps.get_version.outputs.version }}
+
+            ## Installation
+
+            ### Unix-like systems (Linux, macOS)
+            ```bash
+            curl -s https://raw.githubusercontent.com/latentsp/remote-mcp/${{ steps.get_version.outputs.version }}/scripts/install.sh | bash
+            ```
+
+            ### Windows (PowerShell)
+            ```powershell
+            Invoke-WebRequest -Uri https://raw.githubusercontent.com/latentsp/remote-mcp/${{ steps.get_version.outputs.version }}/scripts/install.ps1 -OutFile install.ps1; .\install.ps1
+            ```
           draft: false
-          prerelease: true
+          prerelease: false
           files: |
             artifacts/**/* # Upload all files from the artifacts directory
