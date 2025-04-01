@@ -98,9 +98,9 @@ jobs:
           for dir in artifacts/remote-mcp-*; do
             if [ -d "$dir" ]; then
               target_name=$(basename "$dir")
-              if [ -f "$dir/remote-mcp" ] && [ ! -f "artifacts/$target_name" ]; then
+              if [ -f "$dir/remote-mcp" ]; then
                 mv "$dir/remote-mcp" "artifacts/$target_name"
-              elif [ -f "$dir/remote-mcp.exe" ] && [ ! -f "artifacts/$target_name.exe" ]; then
+              elif [ -f "$dir/remote-mcp.exe" ]; then
                 mv "$dir/remote-mcp.exe" "artifacts/$target_name.exe"
               fi
               rm -r "$dir"
