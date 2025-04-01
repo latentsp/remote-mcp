@@ -97,7 +97,7 @@ jobs:
         run: |
           for dir in artifacts/remote-mcp-*; do
             if [ -d "$dir" ]; then
-              mv "$dir/remote-mcp"* "$dir/../"
+              mv "$dir/remote-mcp"* "$dir/../$(basename "$dir")"
               rm -r "$dir"
             fi
           done
